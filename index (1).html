@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book an appointment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef3f1;
+    --surface: #ffffff;
+    --ink: #16242c;
+    --muted: #5b6b73;
+    --line: #d9e2e0;
+    --accent: #0f6e6e;
+    --accent-ink: #ffffff;
+    --accent-soft: #d8ecea;
+    --off: #b4bfc3;
+    --danger: #b3261e;
+    --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1a1d;
+      --surface: #172429;
+      --ink: #e8f0ee;
+      --muted: #94a6ab;
+      --line: #263a40;
+      --accent: #3fb8b0;
+      --accent-ink: #062321;
+      --accent-soft: #1d3a3d;
+      --off: #4a5c61;
+      --danger: #ff8a80;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 40px 16px 64px;
+  }
+  main { max-width: 880px; margin: 0 auto; }
+  header { margin-bottom: 28px; }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    line-height: 1.1;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+  header p { margin: 0; color: var(--muted); max-width: 52ch; }
+
+  .card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  .pane { padding: 28px; }
+  .pane + .pane { border-left: 1px solid var(--line); }
+  @media (max-width: 720px) {
+    .card { grid-template-columns: 1fr; }
+    .pane + .pane { border-left: 0; border-top: 1px solid var(--line); }
+    .pane { padding: 20px; }
+  }
+
+  /* Calendar */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .cal-head h2 { font-family: var(--font-display); font-size: 1.25rem; margin: 0; font-weight: 700; }
+  .nav { display: flex; gap: 6px; }
+  .nav button {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font-size: 18px; cursor: pointer;
+  }
+  .nav button:disabled { opacity: .35; cursor: not-allowed; }
+  .dow, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .dow span { font-size: .8rem; color: var(--muted); padding: 4px 0 8px; }
+  .days span, .days button { aspect-ratio: 1; }
+  .days button {
+    border: 0; border-radius: 999px; background: transparent;
+    font: inherit; font-weight: 500; cursor: pointer; color: var(--off);
+  }
+  .days button:disabled { cursor: default; }
+  .days button.open { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .days button.open:hover { outline: 2px solid var(--accent); }
+  .days button.selected, .days button.selected:hover { background: var(--accent); color: var(--accent-ink); outline: none; }
+  .legend { margin-top: 14px; font-size: .85rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .legend i { width: 14px; height: 14px; border-radius: 50%; background: var(--accent-soft); border: 1px solid var(--accent); display: inline-block; }
+
+  /* Right pane */
+  .pane h3 { font-family: var(--font-display); font-size: 1.25rem; margin: 0 0 4px; }
+  .hint { color: var(--muted); margin: 0 0 16px; }
+  .times { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .times button {
+    padding: 10px 8px; border-radius: 10px; border: 1px solid var(--line);
+    background: transparent; color: var(--ink); font: inherit; font-weight: 500; cursor: pointer;
+  }
+  .times button:hover { border-color: var(--accent); }
+  .times button.selected { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  form { margin-top: 18px; display: grid; gap: 12px; }
+  label { display: grid; gap: 4px; font-size: .9rem; font-weight: 500; }
+  input, select {
+    font: inherit; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  }
+  .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .submit {
+    margin-top: 4px; padding: 12px 16px; border: 0; border-radius: 12px;
+    background: var(--accent); color: var(--accent-ink);
+    font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .submit:disabled { opacity: .6; cursor: wait; }
+  .error { color: var(--danger); margin: 0; font-size: .92rem; }
+
+  .state { padding: 40px 24px; text-align: center; color: var(--muted); }
+  .state button, .again {
+    margin-top: 12px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line);
+    background: transparent; color: var(--ink); font: inherit; cursor: pointer;
+  }
+  .done { padding: 48px 28px; text-align: center; }
+  .done h2 { font-family: var(--font-display); font-size: 1.7rem; margin: 0 0 8px; }
+  .done p { margin: 0; color: var(--muted); }
+  .done strong { color: var(--ink); }
+
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: no-preference) {
+    .days button, .times button { transition: background .15s, border-color .15s; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Book an appointment</h1>
+    <p>Pick a highlighted date, choose a time, and we'll email you a confirmation.</p>
+  </header>
+
+  <div id="loading" class="card"><div class="state" style="grid-column:1/-1">Loading available dates…</div></div>
+  <div id="failed" class="card" hidden>
+    <div class="state" style="grid-column:1/-1">
+      <p>We couldn't load available dates. Check your connection and try again.</p>
+      <button type="button" id="retry">Try again</button>
+    </div>
+  </div>
+  <div id="empty" class="card" hidden>
+    <div class="state" style="grid-column:1/-1">No dates are open right now. Please check back soon.</div>
+  </div>
+
+  <div id="done" class="card" hidden>
+    <div class="done" style="grid-column:1/-1">
+      <h2>You're booked</h2>
+      <p id="doneText"></p>
+      <button type="button" class="again" id="again">Book another time</button>
+    </div>
+  </div>
+
+  <div id="booker" class="card" hidden>
+    <section class="pane" aria-label="Choose a date">
+      <div class="cal-head">
+        <h2 id="monthLabel"></h2>
+        <div class="nav">
+          <button type="button" id="prev" aria-label="Previous month">‹</button>
+          <button type="button" id="next" aria-label="Next month">›</button>
+        </div>
+      </div>
+      <div class="dow" aria-hidden="true"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+      <div class="days" id="days"></div>
+      <div class="legend"><i></i> Available</div>
+    </section>
+
+    <section class="pane" aria-live="polite">
+      <div id="pickDate">
+        <h3>Select a date</h3>
+        <p class="hint">Open times will appear here.</p>
+      </div>
+      <div id="pickTime" hidden>
+        <h3 id="dateTitle"></h3>
+        <p class="hint">Choose a time.</p>
+        <div class="times" id="times"></div>
+        <p class="error" id="error" role="alert" hidden></p>
+
+        <form id="form" hidden novalidate>
+          <label>Full name
+            <input name="name" type="text" autocomplete="name" required maxlength="100">
+          </label>
+          <label>Email
+            <input name="email" type="email" autocomplete="email" required maxlength="150">
+          </label>
+          <label>Service
+            <select name="service" id="service" required></select>
+          </label>
+          <div class="trap" aria-hidden="true">
+            <label>Website <input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+          </div>
+          <button class="submit" type="submit" id="submit">Confirm booking</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+/* ====== EDIT THESE ====== */
+const CONFIG = {
+  AVAILABILITY_URL: "https://YOUR-N8N-DOMAIN/webhook/availability",
+  BOOK_URL: "https://YOUR-N8N-DOMAIN/webhook/book",
+  SERVICES: ["Consultation", "Follow-up", "Other"]
+};
+/* ======================== */
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+
+let avail = {};          // { "2026-10-12": ["09:00", "10:00"] }
+let view = new Date();   // month being shown
+let minMonth, maxMonth;
+let selectedDate = null, selectedTime = null;
+
+function parseKey(k) { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); }
+function fmtDate(k) { return parseKey(k).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }); }
+function fmtTime(t) {
+  const [h, m] = t.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}:${pad(m)} ${h >= 12 ? "PM" : "AM"}`;
+}
+function show(id) {
+  ["loading", "failed", "empty", "done", "booker"].forEach(x => $(x).hidden = x !== id);
+}
+
+async function loadAvailability() {
+  show("loading");
+  try {
+    const res = await fetch(`${CONFIG.AVAILABILITY_URL}?t=${Date.now()}`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    let data = await res.json();
+    if (Array.isArray(data)) data = data[0];
+    avail = {};
+    (data.available || []).forEach(a => { avail[a.date] = a.free; });
+    const keys = Object.keys(avail).sort();
+    if (!keys.length) return show("empty");
+
+    const first = parseKey(keys[0]), last = parseKey(keys[keys.length - 1]);
+    minMonth = new Date(first.getFullYear(), first.getMonth(), 1);
+    maxMonth = new Date(last.getFullYear(), last.getMonth(), 1);
+    if (selectedDate && !avail[selectedDate]) { selectedDate = null; selectedTime = null; }
+    view = selectedDate ? parseKey(selectedDate) : new Date(minMonth);
+    view = new Date(view.getFullYear(), view.getMonth(), 1);
+    show("booker");
+    renderCalendar();
+    renderTimes();
+  } catch (e) {
+    console.error(e);
+    show("failed");
+  }
+}
+
+function renderCalendar() {
+  const y = view.getFullYear(), m = view.getMonth();
+  $("monthLabel").textContent = view.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  $("prev").disabled = view <= minMonth;
+  $("next").disabled = view >= maxMonth;
+
+  const grid = $("days");
+  grid.innerHTML = "";
+  const lead = new Date(y, m, 1).getDay();
+  const total = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < lead; i++) grid.appendChild(document.createElement("span"));
+  for (let d = 1; d <= total; d++) {
+    const key = `${y}-${pad(m + 1)}-${pad(d)}`;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = d;
+    if (avail[key]) {
+      b.className = "open" + (key === selectedDate ? " selected" : "");
+      b.setAttribute("aria-label", `${fmtDate(key)}, available`);
+      b.onclick = () => { selectedDate = key; selectedTime = null; renderCalendar(); renderTimes(); };
+    } else {
+      b.disabled = true;
+      b.setAttribute("aria-label", `${fmtDate(key)}, unavailable`);
+    }
+    grid.appendChild(b);
+  }
+}
+
+function renderTimes() {
+  $("pickDate").hidden = !!selectedDate;
+  $("pickTime").hidden = !selectedDate;
+  if (!selectedDate) return;
+  $("dateTitle").textContent = fmtDate(selectedDate);
+  const wrap = $("times");
+  wrap.innerHTML = "";
+  avail[selectedDate].forEach(t => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = fmtTime(t);
+    if (t === selectedTime) b.className = "selected";
+    b.onclick = () => { selectedTime = t; renderTimes(); $("form").hidden = false; };
+    wrap.appendChild(b);
+  });
+  $("form").hidden = !selectedTime;
+}
+
+$("prev").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); renderCalendar(); };
+$("next").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); renderCalendar(); };
+$("retry").onclick = loadAvailability;
+$("again").onclick = () => { selectedDate = null; selectedTime = null; $("form").reset(); loadAvailability(); };
+
+$("service").innerHTML = CONFIG.SERVICES.map(s => `<option>${s}</option>`).join("");
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const f = e.target, err = $("error"), btn = $("submit");
+  err.hidden = true;
+
+  const name = f.name.value.trim(), email = f.email.value.trim();
+  if (!name) return fail("Enter your full name.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("Enter a valid email address.");
+
+  btn.disabled = true;
+  btn.textContent = "Booking…";
+  try {
+    // Form-encoded body keeps this a "simple" request, so the browser skips the CORS preflight.
+    const body = new URLSearchParams({
+      name, email,
+      service: f.service.value,
+      date: selectedDate,
+      time: selectedTime,
+      website: f.website.value
+    });
+    const res = await fetch(CONFIG.BOOK_URL, { method: "POST", body });
+    let data = await res.json();
+    if (Array.isArray(data)) data = data[0];
+
+    if (data.ok) {
+      $("doneText").innerHTML = `<strong>${fmtDate(selectedDate)} at ${fmtTime(selectedTime)}</strong>. We sent a confirmation to ${email.replace(/[<>&]/g, "")}.`;
+      show("done");
+    } else {
+      fail(data.message || "That time is no longer available. Pick another.");
+      selectedTime = null;
+      loadAvailabilityQuiet();
+    }
+  } catch (x) {
+    console.error(x);
+    fail("Something went wrong. Please try again.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Confirm booking";
+  }
+
+  function fail(msg) { err.textContent = msg; err.hidden = false; }
+});
+
+// Refresh dates after a conflict without flashing the loading screen
+async function loadAvailabilityQuiet() {
+  try {
+    const res = await fetch(`${CONFIG.AVAILABILITY_URL}?t=${Date.now()}`);
+    let data = await res.json();
+    if (Array.isArray(data)) data = data[0];
+    avail = {};
+    (data.available || []).forEach(a => { avail[a.date] = a.free; });
+    if (!avail[selectedDate]) selectedDate = null;
+    renderCalendar();
+    renderTimes();
+  } catch (e) { console.error(e); }
+}
+
+loadAvailability();
+</script>
+</body>
+</html>
